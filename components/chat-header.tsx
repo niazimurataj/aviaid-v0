@@ -55,13 +55,13 @@ function PureChatHeader({
         </Tooltip>
       )}
 
-      {!isReadonly && (
+      {/* {!isReadonly && (
         <ModelSelector
           session={session}
           selectedModelId={selectedModelId}
           className="order-1 md:order-2"
         />
-      )}
+      )} */}
 
       {!isReadonly && (
         <VisibilitySelector
