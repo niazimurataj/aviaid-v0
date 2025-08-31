@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+// import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useWindowSize } from 'usehooks-ts';
 
@@ -15,10 +15,10 @@ import type { Session } from 'next-auth';
 
 function PureChatHeader({
   chatId,
-  selectedModelId,
+  // selectedModelId,
   selectedVisibilityType,
   isReadonly,
-  session,
+  // session,
 }: {
   chatId: string;
   selectedModelId: string;

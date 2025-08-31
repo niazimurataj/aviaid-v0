@@ -39,7 +39,7 @@ import type { ChatMessage } from '@/lib/types';
 import type { ChatModel } from '@/lib/ai/models';
 import type { VisibilityType } from '@/components/visibility-selector';
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
@@ -147,28 +147,6 @@ function stripCoTTransform(): TransformStream<any, any> {
   });
 }
 
-const stripThinkingTransform: StreamTextTransform<any> = () =>
-  new TransformStream<TextStreamPart<any>, TextStreamPart<any>>({
-    transform(part, controller) {
-      // 1) Ignore separate reasoning events (Anthropic/OpenAI reasoning models)
-      if ((part as any).type === 'reasoning') return;
-
-      // 2) Strip inline <think>...</think> blocks some models emit in text
-      if ((part as any).type === 'text') {
-        const cleaned = (part as any).text.replace(
-          /<think>[\s\S]*?<\/think>/g,
-          '',
-        );
-        if (!cleaned) return; // nothing to send after stripping
-        controller.enqueue({ ...(part as any), text: cleaned });
-        return;
-      }
-
-      // pass through everything else (tool calls, etc.)
-      controller.enqueue(part);
-    },
-  });
-
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
 
@@ -262,7 +240,11 @@ export async function POST(request: Request) {
           model: myProvider.languageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel, requestHints }),
           messages: convertToModelMessages(uiMessages),
-          stopWhen: stepCountIs(5),
+          // stopWhen: stepCountIs(10),
+          maxOutputTokens: 4096,
+          // note - you've turned off tool use!
+
+          toolChoice: 'none',
           experimental_activeTools:
             selectedChatModel === 'chat-model'
               ? []
