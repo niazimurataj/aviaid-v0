@@ -11,6 +11,9 @@ importers:
       '@ai-sdk/fireworks':
         specifier: ^1.0.11
         version: 1.0.11(zod@3.25.68)
+      '@ai-sdk/openai':
+        specifier: 2.0.0-beta.6
+        version: 2.0.0-beta.6(zod@3.25.68)
       '@ai-sdk/provider':
         specifier: 2.0.0-beta.1
         version: 2.0.0-beta.1
@@ -299,6 +302,12 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
+
+  '@ai-sdk/openai@2.0.0-beta.6':
+    resolution: {integrity: sha512-w4xActMOB4e5vx7B9erMQvbrXLZvA01HxOUBW5EIn4BfRvOx3SG+lkr1p+V4593W5vT+RcrXPsAasJH5gXcw3A==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.49
 
   '@ai-sdk/provider-utils@3.0.0-beta.2':
     resolution: {integrity: sha512-H4K+4weOVgWqrDDeAbQWoA4U5mN4WrQPHQFdH7ynQYcnhj/pzctU9Q6mGlR5ESMWxaXxazxlOblSITlXo9bahA==}
@@ -2440,6 +2449,10 @@ packages:
     resolution: {integrity: sha512-nVpZkTMM9rF6AQ9gPJpFsNAMt48wIzB5TQgiTLdHiuO8XEDhUgZEhqKlZWXbIzo9VmJ/HvysHqEaVeD5v9TPvA==}
     engines: {node: '>=20.0.0'}
 
+  eventsource-parser@3.0.6:
+    resolution: {integrity: sha512-Vo1ab+QXPzZ4tCa8SwIHJFaSzy4R6SHf7BY79rFBDf0idraZWAkYrDjDj8uWaSm3S2TK+hJ7/t1CEmZ7jXw+pg==}
+    engines: {node: '>=18.0.0'}
+
   extend@3.0.2:
     resolution: {integrity: sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g==}
 
@@ -4136,11 +4149,17 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.5(zod@3.25.68)
       zod: 3.25.68
 
+  '@ai-sdk/openai@2.0.0-beta.6(zod@3.25.68)':
+    dependencies:
+      '@ai-sdk/provider': 2.0.0-beta.1
+      '@ai-sdk/provider-utils': 3.0.0-beta.2(zod@3.25.68)
+      zod: 3.25.68
+
   '@ai-sdk/provider-utils@3.0.0-beta.2(zod@3.25.68)':
     dependencies:
       '@ai-sdk/provider': 2.0.0-beta.1
       '@standard-schema/spec': 1.0.0
-      eventsource-parser: 3.0.3
+      eventsource-parser: 3.0.6
       zod: 3.25.68
       zod-to-json-schema: 3.24.5(zod@3.25.68)
 
@@ -6153,6 +6172,8 @@ snapshots:
   esutils@2.0.3: {}
 
   eventsource-parser@3.0.3: {}
+
+  eventsource-parser@3.0.6: {}
 
   extend@3.0.2: {}
 
