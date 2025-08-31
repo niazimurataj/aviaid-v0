@@ -20,24 +20,28 @@ function PureSuggestedActions({
 }: SuggestedActionsProps) {
   const suggestedActions = [
     {
-      title: 'What are the advantages',
-      label: 'of using Next.js?',
-      action: 'What are the advantages of using Next.js?',
+      title: 'Diagnose torque fluctuation',
+      label: 'on a Bell 206 during climb',
+      action:
+        'How should I diagnose intermittent torque gauge fluctuations on a Bell 206 during climb in Canadian winter conditions?',
     },
     {
-      title: 'Write code to',
-      label: `demonstrate djikstra's algorithm`,
-      action: `Write code to demonstrate djikstra's algorithm`,
+      title: 'Resolve tail rotor vibration',
+      label: 'on an AS350 (H125)',
+      action:
+        'What steps should I take to troubleshoot a persistent low-frequency tail rotor vibration on an AS350 (H125)?',
     },
     {
-      title: 'Help me write an essay',
-      label: `about silicon valley`,
-      action: `Help me write an essay about silicon valley`,
+      title: 'Check low manifold pressure',
+      label: 'indication on a R44',
+      action:
+        'How do I troubleshoot a recurrent low manifold pressure indication on a Robinson R44 during hover checks?',
     },
     {
-      title: 'What is the weather',
-      label: 'in San Francisco?',
-      action: 'What is the weather in San Francisco?',
+      title: 'Investigate HUMS chip alerts',
+      label: 'on a Sikorsky S-76',
+      action:
+        'What are common causes and diagnostic steps for intermittent HUMS chip detector alerts on a Sikorsky S-76 operating in Canada?',
     },
   ];
 

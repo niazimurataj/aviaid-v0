@@ -39,11 +39,11 @@ export function AppSidebar({ user }: { user: User | undefined }) {
               <Image
                 src={Logo}
                 alt="Aviaid logo"
-                className="h-6 w-auto"
+                className="h-12 w-auto"
                 priority
               />
               <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md cursor-pointer">
-                Aviaid AME Assistant
+                AME Assistant
               </span>
             </Link>
             <Tooltip>
