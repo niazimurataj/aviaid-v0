@@ -5,7 +5,7 @@ import {
 } from 'ai';
 
 import { fireworks } from '@ai-sdk/fireworks';
-import { openai } from '@ai-sdk/openai';
+// import { openai } from '@ai-sdk/openai';
 
 import {
   artifactModel,
@@ -26,7 +26,7 @@ export const myProvider = isTestEnvironment
     })
   : customProvider({
       languageModels: {
-        'chat-model': fireworks('accounts/fireworks/models/deepseek-v3p1'),
+        'chat-model': fireworks('accounts/fireworks/models/kimi-k2-instruct'),
         // 'chat-model-reasoning': wrapLanguageModel({
         //   model: fireworks('accounts/fireworks/models/gpt-oss-120b'),
         //   middleware: extractReasoningMiddleware({ tagName: 'think' }),
