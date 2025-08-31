@@ -6,6 +6,7 @@ import {
   stepCountIs,
   streamText,
 } from 'ai';
+import type { TextStreamPart, StreamTextTransform } from 'ai';
 import { auth, type UserType } from '@/app/(auth)/auth';
 import { type RequestHints, systemPrompt } from '@/lib/ai/prompts';
 import {
@@ -61,6 +62,28 @@ export function getStreamContext() {
 
   return globalStreamContext;
 }
+
+const stripThinkingTransform: StreamTextTransform<any> = () =>
+  new TransformStream<TextStreamPart<any>, TextStreamPart<any>>({
+    transform(part, controller) {
+      // 1) Ignore separate reasoning events (Anthropic/OpenAI reasoning models)
+      if ((part as any).type === 'reasoning') return;
+
+      // 2) Strip inline <think>...</think> blocks some models emit in text
+      if ((part as any).type === 'text') {
+        const cleaned = (part as any).text.replace(
+          /<think>[\s\S]*?<\/think>/g,
+          '',
+        );
+        if (!cleaned) return; // nothing to send after stripping
+        controller.enqueue({ ...(part as any), text: cleaned });
+        return;
+      }
+
+      // pass through everything else (tool calls, etc.)
+      controller.enqueue(part);
+    },
+  });
 
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
@@ -165,7 +188,7 @@ export async function POST(request: Request) {
                   'updateDocument',
                   'requestSuggestions',
                 ],
-          experimental_transform: smoothStream({ chunking: 'word' }),
+          experimental_transform: stripThinkingTransform,
           tools: {
             getWeather,
             createDocument: createDocument({ session, dataStream }),
@@ -180,8 +203,6 @@ export async function POST(request: Request) {
             functionId: 'stream-text',
           },
         });
-
-        result.consumeStream();
 
         dataStream.merge(
           result.toUIMessageStream({
