@@ -1,14 +1,15 @@
 import {
   customProvider,
-  extractReasoningMiddleware,
-  wrapLanguageModel,
+  // extractReasoningMiddleware,
+  // wrapLanguageModel,
 } from 'ai';
 
 import { fireworks } from '@ai-sdk/fireworks';
+
 import {
   artifactModel,
   chatModel,
-  reasoningModel,
+  // reasoningModel,
   titleModel,
 } from './models.test';
 import { isTestEnvironment } from '../constants';
@@ -17,20 +18,20 @@ export const myProvider = isTestEnvironment
   ? customProvider({
       languageModels: {
         'chat-model': chatModel,
-        'chat-model-reasoning': reasoningModel,
+        // 'chat-model-reasoning': reasoningModel,
         'title-model': titleModel,
         'artifact-model': artifactModel,
       },
     })
   : customProvider({
       languageModels: {
-        'chat-model': fireworks('accounts/fireworks/models/deepseek-v3p1'),
-        'chat-model-reasoning': wrapLanguageModel({
-          model: fireworks('accounts/fireworks/models/deepseek-v3p1'),
-          middleware: extractReasoningMiddleware({ tagName: 'think' }),
-        }),
-        'title-model': fireworks('accounts/fireworks/models/deepseek-v3p1'),
-        'artifact-model': fireworks('accounts/fireworks/models/deepseek-v3p1'),
+        'chat-model': fireworks('accounts/fireworks/models/gpt-oss-120b'),
+        // 'chat-model-reasoning': wrapLanguageModel({
+        //   model: fireworks('accounts/fireworks/models/gpt-oss-120b'),
+        //   middleware: extractReasoningMiddleware({ tagName: 'think' }),
+        // }),
+        'title-model': fireworks('accounts/fireworks/models/gpt-oss-120b'),
+        'artifact-model': fireworks('accounts/fireworks/models/gpt-oss-120b'),
       },
       imageModels: {
         'small-model': fireworks.image(
