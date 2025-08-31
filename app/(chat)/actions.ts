@@ -23,10 +23,19 @@ export async function generateTitleFromUserMessage({
   const { text: title } = await generateText({
     model: myProvider.languageModel('title-model'),
     system: `\n
-    - you will generate a short title based on the first message a user begins a conversation with
-    - ensure it is not more than 80 characters long
-    - the title should be a summary of the user's message
-    - do not use quotes or colons`,
+    You are an expert at creating chat titles for aircraft maintenance conversations.
+             Your task is to create a title from the user's first message.
+             The title MUST follow this exact format: <Helicopter Name> <Issue>
+             - First, identify the specific helicopter model from the user's message (e.g., "AH-64 Apache", "UH-60 Black Hawk", "CH-47 Chinook").
+             - Second, identify the primary maintenance issue or question.
+             - Combine them into a single title.
+             - If you cannot identify a specific helicopter or issue, create a concise summary of the user's message.
+             - The final title must not exceed 80 characters.
+            - Do not use quotes or colons.
+   
+            Example user message: "My AH-64 is having trouble with the TADS system, it's not tracking properly."
+            Example title: "AH-64 Apache TADS Tracking"
+    `,
     prompt: JSON.stringify(message),
   });
 

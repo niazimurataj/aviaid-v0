@@ -2,11 +2,11 @@ import {
   convertToModelMessages,
   createUIMessageStream,
   JsonToSseTransformStream,
-  smoothStream,
+  // smoothStream,
   stepCountIs,
   streamText,
 } from 'ai';
-import type { TextStreamPart, StreamTextTransform } from 'ai';
+// import type { TextStreamPart, StreamTextTransform } from 'ai';
 import { auth, type UserType } from '@/app/(auth)/auth';
 import { type RequestHints, systemPrompt } from '@/lib/ai/prompts';
 import {
@@ -39,7 +39,7 @@ import type { ChatMessage } from '@/lib/types';
 import type { ChatModel } from '@/lib/ai/models';
 import type { VisibilityType } from '@/components/visibility-selector';
 
-export const maxDuration = 300;
+export const maxDuration = 120;
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
@@ -240,10 +240,9 @@ export async function POST(request: Request) {
           model: myProvider.languageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel, requestHints }),
           messages: convertToModelMessages(uiMessages),
-          // stopWhen: stepCountIs(10),
+          // stopWhen: stepCountIs(15),
           maxOutputTokens: 4096,
           // note - you've turned off tool use!
-
           toolChoice: 'none',
           experimental_activeTools:
             selectedChatModel === 'chat-model'

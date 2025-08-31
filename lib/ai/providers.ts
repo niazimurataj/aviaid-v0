@@ -5,7 +5,7 @@ import {
 } from 'ai';
 
 import { fireworks } from '@ai-sdk/fireworks';
-// import { openai } from '@ai-sdk/openai';
+import { openai } from '@ai-sdk/openai';
 
 import {
   artifactModel,
@@ -26,12 +26,14 @@ export const myProvider = isTestEnvironment
     })
   : customProvider({
       languageModels: {
-        'chat-model': fireworks('accounts/fireworks/models/gpt-oss-120b'),
+        'chat-model': openai('gpt-5'),
         // 'chat-model-reasoning': wrapLanguageModel({
         //   model: fireworks('accounts/fireworks/models/gpt-oss-120b'),
         //   middleware: extractReasoningMiddleware({ tagName: 'think' }),
         // }),
-        'title-model': fireworks('accounts/fireworks/models/gpt-oss-120b'),
+        'title-model': fireworks(
+          'accounts/fireworks/models/llama-v3p3-70b-instruct',
+        ),
         'artifact-model': fireworks('accounts/fireworks/models/gpt-oss-120b'),
       },
       imageModels: {
