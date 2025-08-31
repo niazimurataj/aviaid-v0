@@ -26,7 +26,7 @@ export const myProvider = isTestEnvironment
     })
   : customProvider({
       languageModels: {
-        'chat-model': openai('gpt-5'),
+        'chat-model': fireworks('accounts/fireworks/models/deepseek-v3p1'),
         // 'chat-model-reasoning': wrapLanguageModel({
         //   model: fireworks('accounts/fireworks/models/gpt-oss-120b'),
         //   middleware: extractReasoningMiddleware({ tagName: 'think' }),
