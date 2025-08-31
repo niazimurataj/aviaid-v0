@@ -5,6 +5,7 @@ import {
 } from 'ai';
 
 import { fireworks } from '@ai-sdk/fireworks';
+// import { openai } from '@ai-sdk/openai';
 
 import {
   artifactModel,

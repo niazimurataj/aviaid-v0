@@ -63,6 +63,90 @@ export function getStreamContext() {
   return globalStreamContext;
 }
 
+// Put near the top of the file
+function stripCoTTransform(): TransformStream<any, any> {
+  let inThink = false; // are we inside a <think>… block?
+  let carry = ''; // holds partial text when tags split across chunks
+
+  return new TransformStream({
+    transform(part: any, controller: TransformStreamDefaultController<any>) {
+      // A) Drop dedicated "reasoning" frames entirely
+      if (part?.type === 'reasoning') return;
+
+      // B) Clean incremental text chunks
+      if (part?.type === 'text-delta') {
+        let chunk = String(part.textDelta ?? '');
+        if (!chunk) return;
+
+        // join with any tail from the previous chunk
+        chunk = carry + chunk;
+        carry = '';
+
+        let out = '';
+        let i = 0;
+
+        while (i < chunk.length) {
+          if (!inThink) {
+            const open = chunk.indexOf('<think>', i);
+            if (open === -1) {
+              out += chunk.slice(i);
+              break;
+            }
+            out += chunk.slice(i, open);
+            inThink = true;
+            i = open + '<think>'.length;
+          } else {
+            const close = chunk.indexOf('</think>', i);
+            if (close === -1) {
+              // closing tag not found in this chunk; keep the rest until we see it
+              carry = chunk.slice(i);
+              i = chunk.length;
+            } else {
+              // consume the think block and continue
+              inThink = false;
+              i = close + '</think>'.length;
+            }
+          }
+        }
+
+        if (out) controller.enqueue({ ...part, textDelta: out });
+        return;
+      }
+
+      // C) Some providers use message-delta with a full string payload — clean it too
+      if (
+        part?.type === 'message-delta' &&
+        typeof part?.delta?.content === 'string'
+      ) {
+        const cleaned = part.delta.content.replace(
+          /<think>[\s\S]*?<\/think>/gi,
+          '',
+        );
+        controller.enqueue({
+          ...part,
+          delta: { ...part.delta, content: cleaned },
+        });
+        return;
+      }
+
+      // D) Fallback in case your provider ever emits plain 'text'
+      if (part?.type === 'text' && typeof part?.text === 'string') {
+        const cleaned = part.text.replace(/<think>[\s\S]*?<\/think>/gi, '');
+        if (cleaned) controller.enqueue({ ...part, text: cleaned });
+        return;
+      }
+
+      controller.enqueue(part);
+    },
+
+    flush() {
+      // If the stream ends while inside <think>, drop whatever was buffered
+      inThink = false;
+      carry = '';
+    },
+  });
+}
+
 const stripThinkingTransform: StreamTextTransform<any> = () =>
   new TransformStream<TextStreamPart<any>, TextStreamPart<any>>({
     transform(part, controller) {
@@ -188,7 +272,7 @@ export async function POST(request: Request) {
                   'updateDocument',
                   'requestSuggestions',
                 ],
-          experimental_transform: stripThinkingTransform,
+          experimental_transform: stripCoTTransform,
           tools: {
             getWeather,
             createDocument: createDocument({ session, dataStream }),
