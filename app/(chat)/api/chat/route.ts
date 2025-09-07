@@ -63,65 +63,92 @@ export function getStreamContext() {
   return globalStreamContext;
 }
 
-// Put near the top of the file
-function stripCoTTransform(): TransformStream<any, any> {
-  let inThink = false; // are we inside a <think>… block?
-  let carry = ''; // holds partial text when tags split across chunks
+const stripCoTTransform: () => TransformStream<any, any> = () => {
+  let buffer = '';
+  let inThink = false;
 
-  return new TransformStream({
-    transform(part: any, controller: TransformStreamDefaultController<any>) {
-      // A) Drop dedicated "reasoning" frames entirely
+  const OPEN_RE = /<think\b[^>]*>/i;
+  const CLOSE_RE = /<\/think\s*>/i;
+
+  return new TransformStream<any, any>({
+    transform(part, controller) {
       if (part?.type === 'reasoning') return;
 
-      // B) Clean incremental text chunks
+      // --- TEXT STREAMING ---
       if (part?.type === 'text-delta') {
-        let chunk = String(part.textDelta ?? '');
-        if (!chunk) return;
-
-        // join with any tail from the previous chunk
-        chunk = carry + chunk;
-        carry = '';
+        buffer += String(part.textDelta ?? '');
 
         let out = '';
-        let i = 0;
 
-        while (i < chunk.length) {
+        for (;;) {
+          // 1) If we're not inside a think block, drop any *orphan* closers up front.
           if (!inThink) {
-            const open = chunk.indexOf('<think>', i);
-            if (open === -1) {
-              out += chunk.slice(i);
-              break;
-            }
-            out += chunk.slice(i, open);
-            inThink = true;
-            i = open + '<think>'.length;
-          } else {
-            const close = chunk.indexOf('</think>', i);
-            if (close === -1) {
-              // closing tag not found in this chunk; keep the rest until we see it
-              carry = chunk.slice(i);
-              i = chunk.length;
-            } else {
-              // consume the think block and continue
-              inThink = false;
-              i = close + '</think>'.length;
+            const closeFirst = buffer.match(CLOSE_RE);
+            const openFirst = buffer.match(OPEN_RE);
+            if (
+              closeFirst &&
+              typeof closeFirst.index === 'number' &&
+              (!openFirst ||
+                (typeof openFirst.index === 'number' &&
+                  closeFirst.index < openFirst.index))
+            ) {
+              // remove the orphan closer and keep scanning
+              buffer =
+                buffer.slice(0, closeFirst.index) +
+                buffer.slice(closeFirst.index + closeFirst[0].length);
+              continue;
             }
           }
+
+          if (!inThink) {
+            const mOpen = buffer.match(OPEN_RE);
+            if (!mOpen) {
+              // No open tag → emit almost everything, keep a small tail in case "<think" splits across chunks
+              const KEEP_TAIL = 16;
+              if (buffer.length > KEEP_TAIL) {
+                out += buffer.slice(0, buffer.length - KEEP_TAIL);
+                buffer = buffer.slice(buffer.length - KEEP_TAIL);
+              }
+              break;
+            }
+            // Emit text before <think>
+            const openIndex = mOpen.index ?? 0;
+            out += buffer.slice(0, openIndex);
+            // Drop the open tag and enter think mode
+            buffer = buffer.slice(openIndex + mOpen[0].length);
+            inThink = true;
+            continue;
+          }
+
+          // inThink === true: look for the close
+          const mClose = buffer.match(CLOSE_RE);
+          if (!mClose) {
+            // Still inside; keep buffer bounded so memory doesn't grow
+            if (buffer.length > 8192) buffer = buffer.slice(-4096);
+            break;
+          }
+          // Drop everything up to and including the close tag
+          const closeIndex = mClose.index ?? 0;
+          buffer = buffer.slice(closeIndex + mClose[0].length);
+          inThink = false;
+          // Loop to find more
         }
 
         if (out) controller.enqueue({ ...part, textDelta: out });
         return;
       }
 
-      // C) Some providers use message-delta with a full string payload — clean it too
+      // --- MESSAGE-DELTA FALLBACK ---
       if (
         part?.type === 'message-delta' &&
         typeof part?.delta?.content === 'string'
       ) {
-        const cleaned = part.delta.content.replace(
-          /<think>[\s\S]*?<\/think>/gi,
-          '',
-        );
+        const cleaned = part.delta.content
+          // remove complete blocks
+          .replace(/<think\b[^>]*>[\s\S]*?<\/think\s*>/gi, '')
+          // remove any orphan closers or openers that slipped in
+          .replace(/<\/think\s*>/gi, '')
+          .replace(/<think\b[^>]*>/gi, '');
         controller.enqueue({
           ...part,
           delta: { ...part.delta, content: cleaned },
@@ -129,9 +156,12 @@ function stripCoTTransform(): TransformStream<any, any> {
         return;
       }
 
-      // D) Fallback in case your provider ever emits plain 'text'
+      // --- RARE: PLAIN TEXT ---
       if (part?.type === 'text' && typeof part?.text === 'string') {
-        const cleaned = part.text.replace(/<think>[\s\S]*?<\/think>/gi, '');
+        const cleaned = part.text
+          .replace(/<think\b[^>]*>[\s\S]*?<\/think\s*>/gi, '')
+          .replace(/<\/think\s*>/gi, '')
+          .replace(/<think\b[^>]*>/gi, '');
         if (cleaned) controller.enqueue({ ...part, text: cleaned });
         return;
       }
@@ -139,13 +169,17 @@ function stripCoTTransform(): TransformStream<any, any> {
       controller.enqueue(part);
     },
 
-    flush() {
-      // If the stream ends while inside <think>, drop whatever was buffered
+    flush(controller) {
+      // If we end *not* inside think, emit whatever safe text remains (after killing orphan closers).
+      if (!inThink && buffer) {
+        const safe = buffer.replace(/<\/think\s*>/gi, '');
+        if (safe) controller.enqueue({ type: 'text-delta', textDelta: safe });
+      }
+      buffer = '';
       inThink = false;
-      carry = '';
     },
   });
-}
+};
 
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
